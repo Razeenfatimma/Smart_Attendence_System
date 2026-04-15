@@ -6,18 +6,19 @@ package Smart_attendance_system.ui;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
+import Smart_attendance_system.logic.File_Manager;
+import java.awt.*;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
+import java.net.URL;
 
 /**
  *
  * @author pc
  */
 public class Signup_UI extends javax.swing.JPanel {
-
-private Login parent; // Link to the Main Login class
-    
-    // UI Components
+    private Login parent; 
     private JTextField txtName, txtID;
     private JPasswordField txtPass, txtConfirmPass;
     private JComboBox<String> cbRole, cbDept, cbSemester, cbSection;
@@ -28,11 +29,20 @@ private Login parent; // Link to the Main Login class
 
     public Signup_UI(Login parent) {
         this.parent = parent;
-        initComponents();     // Auto-generated code at the bottom
-        initCustomLayout();   // Your custom professional design
+        initComponents();     
+        initCustomLayout();   
     }
 
-    // --- INNER CLASS FOR SHARP IMAGE RENDERING ---
+    public void clearAllFields() {
+        txtName.setText("");
+        txtID.setText("");
+        txtPass.setText("");
+        txtConfirmPass.setText("");
+        cbRole.setSelectedIndex(0);
+        cbDept.setSelectedIndex(0);
+        for (JCheckBox chk : subjectBoxes) chk.setSelected(false);
+    }
+
     class ImagePanel extends JPanel {
         private Image img;
         public ImagePanel(Image img) { this.img = img; setOpaque(true); }
@@ -42,7 +52,6 @@ private Login parent; // Link to the Main Login class
             if (img != null) {
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 int panelW = getWidth(), panelH = getHeight();
                 int imgW = img.getWidth(null), imgH = img.getHeight(null);
                 int newH = (imgH * panelW) / imgW;
@@ -52,198 +61,184 @@ private Login parent; // Link to the Main Login class
     }
 
     private void initCustomLayout() {
-        Color purpleTint = new Color(243, 245, 255);
         Color actionBlue = new Color(0, 153, 255);
-
         this.setLayout(null);
-        this.setPreferredSize(new Dimension(800, 550));
+        this.setPreferredSize(new Dimension(800, 550)); 
         this.setBackground(Color.WHITE);
 
-        // ---------- LEFT PANEL (Illustration) ----------
         URL sideUrl = getClass().getResource("/Smart_attendance_system/ui/img/side.png");
         if (sideUrl != null) {
             ImagePanel left = new ImagePanel(new ImageIcon(sideUrl).getImage());
             left.setBounds(0, 0, 400, 550);
-            left.setBackground(purpleTint);
+            left.setBackground(new Color(243, 245, 255));
             this.add(left);
         }
 
-        // ---------- RIGHT PANEL ----------
         JPanel right = new JPanel(null);
         right.setBounds(400, 0, 400, 550);
         right.setBackground(Color.WHITE);
 
-        int startY = 20;
-
+        // --- Role ---
         JLabel lblRolePrompt = new JLabel("Role");
-        lblRolePrompt.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblRolePrompt.setBounds(50, startY, 300, 20);
+        lblRolePrompt.setBounds(50, 10, 300, 20);
         right.add(lblRolePrompt);
-
         cbRole = new JComboBox<>(new String[]{"Student", "Teacher"});
-        cbRole.setBounds(50, startY + 20, 300, 30);
-        cbRole.setBackground(Color.WHITE);
+        cbRole.setBounds(50, 30, 300, 30);
         right.add(cbRole);
 
+        // --- Name ---
         JLabel lblName = new JLabel("Full Name");
-        lblName.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblName.setBounds(50, startY + 60, 300, 20);
+        lblName.setBounds(50, 70, 300, 20);
         right.add(lblName);
-        
         txtName = new JTextField();
-        txtName.setBounds(50, startY + 80, 300, 30);
+        txtName.setBounds(50, 90, 300, 30);
         right.add(txtName);
 
+        // --- ID ---
         lblID = new JLabel("Enrollment Number");
-        lblID.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblID.setBounds(50, startY + 120, 300, 20);
+        lblID.setBounds(50, 130, 300, 20);
         right.add(lblID);
-        
         txtID = new JTextField();
-        txtID.setBounds(50, startY + 140, 300, 30);
+        txtID.setBounds(50, 150, 300, 30);
         right.add(txtID);
 
+        // --- Department ---
         JLabel lblDeptLabel = new JLabel("Department");
-        lblDeptLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblDeptLabel.setBounds(50, startY + 180, 300, 20);
+        lblDeptLabel.setBounds(50, 190, 300, 20);
         right.add(lblDeptLabel);
-        
-        cbDept = new JComboBox<>(new String[]{
-            "Computer Science", "Software Engineering", "Information Tech.", "Artificial Intelligence"
-        });
-        cbDept.setBounds(50, startY + 200, 300, 30);
-        cbDept.setBackground(Color.WHITE);
+        cbDept = new JComboBox<>(new String[]{"Computer Science", "Software Engineering", "IT", "AI"});
+        cbDept.setBounds(50, 210, 300, 30);
         right.add(cbDept);
 
-        // DYNAMIC AREA
+        // --- Dynamic Section (Semester or Subjects) ---
         dynamicPanel = new JPanel(null);
-        dynamicPanel.setBounds(50, startY + 240, 300, 100);
+        dynamicPanel.setBounds(50, 250, 300, 65);
         dynamicPanel.setBackground(Color.WHITE);
         right.add(dynamicPanel);
 
-        // BOTTOM ELEMENTS
+        // --- Password Fields (Fixed Positions) ---
         lblPass = new JLabel("Password");
-        lblPass.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblPass.setBounds(50, 320, 300, 20);
         right.add(lblPass);
-
         txtPass = new JPasswordField();
+        txtPass.setBounds(50, 340, 300, 30);
         right.add(txtPass);
 
         lblConfirm = new JLabel("Confirm Password");
-        lblConfirm.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblConfirm.setBounds(50, 380, 300, 20);
         right.add(lblConfirm);
-
         txtConfirmPass = new JPasswordField();
+        txtConfirmPass.setBounds(50, 400, 300, 30);
         right.add(txtConfirmPass);
 
+        // --- Create Account Button ---
         btnSignUp = new JButton("Create Account");
+        btnSignUp.setBounds(50, 450, 300, 35);
         btnSignUp.setBackground(actionBlue);
         btnSignUp.setForeground(Color.WHITE);
         btnSignUp.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnSignUp.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // --- ACTION: Go back to Login after "signing up" ---
-
-        // --- ACTION: Validate and Sign Up ---
-        btnSignUp.addActionListener(e -> {
-            String name = txtName.getText().trim();
-            String id = txtID.getText().trim();
-            String role = cbRole.getSelectedItem().toString();
-            String pass = new String(txtPass.getPassword());
-            String confirmPass = new String(txtConfirmPass.getPassword());
-
-            // 1. Check for empty fields
-            if (name.isEmpty() || id.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill in all fields!", "Validation Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // 2. Password Match Check
-            if (!pass.equals(confirmPass)) {
-                JOptionPane.showMessageDialog(this, "Passwords do not match!", "Validation Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // 3. Teacher-specific validation (at least one subject check)
-            if (role.equals("Teacher")) {
-                boolean subjectSelected = false;
-                for (JCheckBox cb : subjectBoxes) {
-                    if (cb.isSelected()) {
-                        subjectSelected = true;
-                        break;
-                    }
-                }
-                if (!subjectSelected) {
-                    JOptionPane.showMessageDialog(this, "Please select at least one subject.", "Validation Error", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-            }
-
-            // 4. If validation passes
-            JOptionPane.showMessageDialog(this, "Account Created Successfully!");
-            parent.switchPage("LOGIN");
-        });
+        btnSignUp.addActionListener(e -> handleSignUp());
         right.add(btnSignUp);
 
-        cbRole.addActionListener(e -> updateDynamicFields(cbRole.getSelectedItem().toString()));
-        updateDynamicFields("Student"); // Initial call
+        // --- Already have account (Moved up to 500px to ensure visibility) ---
+        JLabel lblAlready = new JLabel("Already have an account?");
+        lblAlready.setBounds(90, 500, 160, 20);
+        right.add(lblAlready);
 
+        JButton btnBack = new JButton("Login");
+        btnBack.setBounds(235, 500, 70, 20);
+        btnBack.setForeground(actionBlue);
+        btnBack.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnBack.setBorderPainted(false);
+        btnBack.setContentAreaFilled(false);
+        btnBack.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnBack.addActionListener(e -> parent.switchPage("LOGIN"));
+        right.add(btnBack);
+
+        cbRole.addActionListener(e -> updateDynamicFields(cbRole.getSelectedItem().toString()));
+        updateDynamicFields("Student");
         this.add(right);
+    }
+
+    private void handleSignUp() {
+        String name = txtName.getText().trim();
+        String id = txtID.getText().trim();
+        String role = cbRole.getSelectedItem().toString();
+        String dept = cbDept.getSelectedItem().toString();
+        String pass = new String(txtPass.getPassword());
+        String confirm = new String(txtConfirmPass.getPassword());
+
+        if (name.isEmpty() || id.isEmpty() || pass.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please fill all fields!");
+            return;
+        }
+        if (!pass.equals(confirm)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match!");
+            return;
+        }
+
+        try (Connection con = File_Manager.getConnection()) {
+            String sql = "INSERT INTO users (name, id, password, role, department, semester, section, subjects) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement pst = con.prepareStatement(sql);
+            pst.setString(1, name);
+            pst.setString(2, id);
+            pst.setString(3, pass);
+            pst.setString(4, role);
+            pst.setString(5, dept);
+
+            if (role.equals("Student")) {
+                pst.setString(6, cbSemester.getSelectedItem().toString());
+                pst.setString(7, cbSection.getSelectedItem().toString());
+                pst.setString(8, "N/A");
+            } else {
+                pst.setString(6, "N/A");
+                pst.setString(7, "N/A");
+                String subs = subjectBoxes.stream()
+                        .filter(AbstractButton::isSelected)
+                        .map(AbstractButton::getText)
+                        .collect(Collectors.joining(", "));
+                pst.setString(8, subs.isEmpty() ? "None" : subs);
+            }
+
+            pst.executeUpdate();
+            JOptionPane.showMessageDialog(this, "Account Created Successfully!");
+            clearAllFields();
+            parent.switchPage("LOGIN");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        }
     }
 
     private void updateDynamicFields(String role) {
         dynamicPanel.removeAll();
         subjectBoxes.clear();
-        int currentY = 0;
 
         if (role.equals("Student")) {
             lblID.setText("Enrollment Number");
-            JLabel semLabel = new JLabel("Semester");
-            semLabel.setBounds(0, currentY, 145, 20);
-            dynamicPanel.add(semLabel);
+            JLabel sL = new JLabel("Semester"); sL.setBounds(0, 0, 145, 20); dynamicPanel.add(sL);
             cbSemester = new JComboBox<>(new String[]{"1","2","3","4","5","6","7","8"});
-            cbSemester.setBounds(0, currentY + 20, 145, 30);
-            dynamicPanel.add(cbSemester);
+            cbSemester.setBounds(0, 20, 145, 30); dynamicPanel.add(cbSemester);
 
-            JLabel secLabel = new JLabel("Section");
-            secLabel.setBounds(155, currentY, 145, 20);
-            dynamicPanel.add(secLabel);
+            JLabel xL = new JLabel("Section"); xL.setBounds(155, 0, 145, 20); dynamicPanel.add(xL);
             cbSection = new JComboBox<>(new String[]{"A","B","C","D"});
-            cbSection.setBounds(155, currentY + 20, 145, 30);
-            dynamicPanel.add(cbSection);
-            currentY += 60;
+            cbSection.setBounds(155, 20, 145, 30); dynamicPanel.add(cbSection);
         } else {
             lblID.setText("Employee ID");
-            JLabel subLabel = new JLabel("Assigned Subjects");
-            subLabel.setBounds(0, currentY, 300, 20);
-            dynamicPanel.add(subLabel);
-            JPanel subGrid = new JPanel(new GridLayout(2, 2, 5, 5));
-            subGrid.setBounds(0, currentY + 20, 300, 60);
-            subGrid.setBackground(Color.WHITE);
-            String[] subjects = {"Mathematics", "Communication", "Programming", "Digital Logic"};
-            for (String sub : subjects) {
-                JCheckBox chk = new JCheckBox(sub);
-                chk.setBackground(Color.WHITE);
-                subjectBoxes.add(chk);
-                subGrid.add(chk);
+            JLabel subL = new JLabel("Assigned Subjects"); subL.setBounds(0, 0, 300, 20); dynamicPanel.add(subL);
+            JPanel grid = new JPanel(new GridLayout(2, 2));
+            grid.setBounds(0, 20, 300, 45); grid.setBackground(Color.WHITE);
+            String[] subs = {"Math", "OOP", "DSA", "DBMS"};
+            for (String s : subs) {
+                JCheckBox chk = new JCheckBox(s); chk.setBackground(Color.WHITE);
+                subjectBoxes.add(chk); grid.add(chk);
             }
-            dynamicPanel.add(subGrid);
-            currentY += 85;
+            dynamicPanel.add(grid);
         }
-
-        dynamicPanel.setSize(300, currentY);
-        int baseY = dynamicPanel.getY() + dynamicPanel.getHeight() + 10;
-        lblPass.setBounds(50, baseY, 300, 20);
-        txtPass.setBounds(50, baseY + 20, 300, 30);
-        lblConfirm.setBounds(50, baseY + 60, 300, 20);
-        txtConfirmPass.setBounds(50, baseY + 80, 300, 30);
-        btnSignUp.setBounds(50, baseY + 125, 300, 40);
-
         dynamicPanel.revalidate();
         dynamicPanel.repaint();
     }
-    /**
-     * This method is called from within the constructor to initialize the form.
+    /* This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
